@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prism Academy — Session Calendar</title>
+<style>
+  :root{
+    --forest:#4A6741; --forest-deep:#2C3F26; --cream:#EDFFE1; --gold:#F5B942; --gold-dark:#E0A52C;
+    --teal:#2F6B6B; --bg:#EEF3E6; --card:#fff; --text:#23291d; --muted:#6A7360;
+    --warm:#F5F8EF; --tint:#E7EEDB; --border:#DDE4CF; --border-strong:#C9D3BA;
+    --font:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 24px 64px}
+  .head{background:var(--forest);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;
+    justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .head h1{margin:0;color:var(--cream);font-size:22px;font-weight:800;letter-spacing:.02em}
+  .head .sub{color:var(--gold);font-size:10.5px;font-weight:700;letter-spacing:.32em;margin-top:4px}
+  .head p{margin:8px 0 0;color:rgba(237,255,225,.8);font-size:13px;max-width:52ch}
+  .head a.btn{background:var(--gold);color:var(--forest-deep);text-decoration:none;font-weight:700;
+    padding:10px 16px;border-radius:6px;font-size:13.5px;display:inline-block}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--forest)}
+  .stat.c::before{background:var(--forest)} .stat.p::before{background:var(--gold-dark)} .stat.f::before{background:var(--teal)}
+  .stat .n{font-size:26px;font-weight:800;color:var(--forest)} .stat.p .n{color:var(--gold-dark)} .stat.f .n{color:var(--teal)}
+  .stat .l{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:6px}
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;margin-bottom:16px}
+  .mlabel{font-size:17px;font-weight:800;color:var(--forest);min-width:150px;text-align:center}
+  button,select{font-family:inherit}
+  .ic{width:34px;height:34px;border-radius:6px;border:1px solid var(--border-strong);background:#fff;cursor:pointer;color:var(--forest);font-size:16px}
+  select{border:1px solid var(--border-strong);border-radius:6px;padding:8px 10px;font-size:14px;background:#fff}
+  .spacer{flex:1}
+  .seg button{border:1px solid var(--border-strong);background:#fff;padding:8px 14px;font-weight:700;font-size:12.5px;color:var(--muted);cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--forest);color:#fff}
+  .seg button:first-child{border-radius:6px 0 0 6px} .seg button:last-child{border-radius:0 6px 6px 0;border-left:0}
+  a.ghost{border:1px solid var(--border-strong);background:#fff;color:var(--forest);text-decoration:none;font-weight:700;
+    font-size:13px;padding:8px 14px;border-radius:6px}
+  .cal{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .chead,.cgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+  .chead{background:var(--warm);border-bottom:1px solid var(--border)}
+  .chead div{padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-height:112px;min-width:0;
+    padding:6px 7px;display:flex;flex-direction:column;gap:4px}
+  .cell:nth-child(7n){border-right:0}
+  .cell.out{background:#FAFBF6} .cell.out .dn{color:#c1c6b6}
+  .cell.today .dn{background:var(--forest);color:var(--cream);width:23px;height:23px;border-radius:50%;display:grid;place-items:center}
+  .dn{font-size:13px;font-weight:700}
+  .pill{border:0;border-radius:6px;padding:4px 7px;font-size:11px;line-height:1.25;color:#fff;cursor:pointer;
+    text-align:left;width:100%;min-width:0;border-left:3px solid rgba(0,0,0,.22)}
+  .pill.proposed{background-image:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(255,255,255,.25) 6px,rgba(255,255,255,.25) 12px)}
+  .pill b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9;font-size:10px}
+  .more{font-size:11px;color:var(--forest);background:none;border:0;cursor:pointer;text-align:left;font-weight:700}
+  .list .day{border-top:1px solid var(--border)} .list .day:first-child{border-top:0}
+  .list .dh{background:var(--warm);padding:9px 16px;font-weight:800;color:var(--forest);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .row{display:grid;grid-template-columns:90px 1fr 150px 130px 100px;gap:12px;padding:11px 16px;border-top:1px solid var(--border);font-size:14px;align-items:center}
+  .row .t{font-weight:700;color:var(--forest)} .row .m{font-weight:700}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
+  .badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+  .badge.confirmed{background:#E5EFDC;color:var(--forest)} .badge.proposed{background:#FBEDCF;color:#9A6A10}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .legend span.k{width:20px;height:12px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:6px}
+  .ov{position:fixed;inset:0;background:rgba(28,40,22,.55);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50}
+  .ov.open{display:flex} .modal{background:#fff;border-radius:14px;max-width:520px;width:100%;overflow:hidden}
+  .mh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .mh h2{margin:0;font-size:17px;color:var(--forest)} .mh button{border:0;background:none;font-size:20px;cursor:pointer;color:var(--muted)}
+  .mb{padding:18px 20px;display:grid;gap:12px}
+  .kv .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .kv .v{font-weight:700;margin-top:2px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:820px){.stats{grid-template-columns:1fr 1fr}.row{grid-template-columns:80px 1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>PRISM ACADEMY</h1>
+      <div class="sub">OF INTERIOR DESIGN</div>
+      <p>Program session calendar. Editing is in the admin (secure logins &amp; roles); this page is the shared read view.</p>
+    </div>
+    <a class="btn" href="/admin/">Open admin to edit ↗</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Sessions this month</div></div>
+    <div class="stat c"><div class="n" id="stConf">0</div><div class="l">Confirmed</div></div>
+    <div class="stat p"><div class="n" id="stProp">0</div><div class="l">Proposed</div></div>
+    <div class="stat f"><div class="n" id="stFac">0</div><div class="l">Faculty engaged</div></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="ic" id="prev">‹</button>
+    <div class="mlabel" id="mlabel">—</div>
+    <button class="ic" id="next">›</button>
+    <button class="ghost" id="today" style="cursor:pointer">Today</button>
+    <div class="spacer"></div>
+    <select id="fpod"><option value="">All pods</option></select>
+    <div class="seg"><button id="vMonth" aria-pressed="true">Month</button><button id="vList" aria-pressed="false">List</button></div>
+    <a class="ghost" id="ics" href="#">⬇ Export .ics</a>
+  </div>
+
+  <div id="calView" class="cal"><div class="chead" id="chead"></div><div class="cgrid" id="cgrid"></div></div>
+  <div id="listView" class="cal list" style="display:none"></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="ov" id="ov"><div class="modal">
+  <div class="mh"><h2 id="dTitle">Session</h2><button onclick="closeOv()">✕</button></div>
+  <div class="mb" id="dBody"></div>
+</div></div>
+
+<script>
+const GCAL = {{ gcal_configured|yesno:"true,false" }};
+const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+let PODS = {}, SESSIONS = [], cur = new Date(2026,5,1), view = "month", filterPod = "";
+
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function fmtTime(t){if(!t)return"";let[h,m]=t.split(":");h=+h;let ap=h<12?"AM":"PM",hh=h%12||12;return hh+":"+m+" "+ap}
+function podColor(s){return (PODS[s]||{}).color||"#4A6741"}
+function podFull(s){return (PODS[s]||{}).name||s}
+function contrast(hex){let c=hex.replace("#","");let r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);return (r*299+g*587+b*114)/1000>150?"#23291d":"#fff"}
+
+async function load(){
+  const [pods, sess] = await Promise.all([
+    fetch("/api/pods/").then(r=>r.json()),
+    fetch("/api/sessions/").then(r=>r.json()),
+  ]);
+  (pods.results||pods).forEach(p=>PODS[p.short]=p);
+  SESSIONS = (sess.results||sess);
+  buildFilter(); legend(); render();
+}
+function buildFilter(){
+  const f=document.getElementById("fpod");
+  f.innerHTML='<option value="">All pods</option>'+Object.keys(PODS).map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("");
+  f.onchange=()=>{filterPod=f.value;render()};
+}
+function legend(){
+  document.getElementById("legend").innerHTML =
+    '<span><span class="k" style="background:var(--forest)"></span>Confirmed</span>'+
+    '<span><span class="k" style="background:var(--forest);background-image:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,255,255,.4) 4px,rgba(255,255,255,.4) 8px)"></span>Proposed</span>'+
+    '&nbsp; ' + Object.keys(PODS).map(p=>`<span title="${esc(podFull(p))}"><span class="k" style="background:${podColor(p)}"></span>${esc(p)}</span>`).join("");
+}
+function visible(){return SESSIONS.filter(s=>!filterPod||s.pod_short===filterPod)}
+function inMonth(s){const d=new Date(s.date+"T00:00:00");return d.getFullYear()===cur.getFullYear()&&d.getMonth()===cur.getMonth()}
+
+function stats(){
+  const m=visible().filter(inMonth), conf=m.filter(s=>s.status==="confirmed").length, fac={};
+  m.forEach(s=>fac[s.faculty]=1);
+  stTotal.textContent=m.length; stConf.textContent=conf; stProp.textContent=m.length-conf; stFac.textContent=Object.keys(fac).length;
+}
+function render(){
+  document.getElementById("calView").style.display=view==="month"?"":"none";
+  document.getElementById("listView").style.display=view==="list"?"":"none";
+  document.getElementById("ics").href="/api/sessions/ics/"+(filterPod?("?pod="+encodeURIComponent(filterPod)):"");
+  stats();
+  view==="month"?renderMonth():renderList();
+}
+function renderMonth(){
+  mlabel.textContent=MONTHS[cur.getMonth()]+" "+cur.getFullYear();
+  document.getElementById("chead").innerHTML=DOW.map(d=>`<div>${d}</div>`).join("");
+  const grid=document.getElementById("cgrid");grid.innerHTML="";
+  const first=new Date(cur.getFullYear(),cur.getMonth(),1);
+  const off=(first.getDay()+6)%7, start=new Date(first);start.setDate(1-off);
+  const byDay={};visible().forEach(s=>{(byDay[s.date]=byDay[s.date]||[]).push(s)});
+  const dim=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+  const cells=Math.ceil((off+dim)/7)*7;
+  const todayIso=new Date().toISOString().slice(0,10);
+  for(let i=0;i<cells;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const iso=d.toISOString().slice(0,10), out=d.getMonth()!==cur.getMonth();
+    const cell=document.createElement("div");cell.className="cell"+(out?" out":"")+(iso===todayIso?" today":"");
+    cell.innerHTML=`<div><span class="dn">${d.getDate()}</span></div>`;
+    const items=(byDay[iso]||[]).sort((a,b)=>a.start.localeCompare(b.start));
+    items.slice(0,3).forEach(s=>cell.appendChild(pill(s)));
+    if(items.length>3){const b=document.createElement("button");b.className="more";b.textContent="+"+(items.length-3)+" more";b.onclick=()=>{view="list";sync();render()};cell.appendChild(b)}
+    grid.appendChild(cell);
+  }
+}
+function pill(s){
+  const b=document.createElement("button");const col=podColor(s.pod_short);
+  b.className="pill "+s.status;if(s.status==="confirmed")b.style.background=col;else b.style.backgroundColor=col;
+  b.style.color=contrast(col);
+  b.innerHTML=`<b>${fmtTime(s.start)} ${esc(s.title)}</b><span>${esc(s.faculty)} · ${s.mode==="virtual"?"Virtual":"In person"}</span>`;
+  b.onclick=()=>openDetail(s);return b;
+}
+function renderList(){
+  mlabel.textContent=MONTHS[cur.getMonth()]+" "+cur.getFullYear();
+  const m=visible().filter(inMonth).sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
+  const box=document.getElementById("listView");
+  if(!m.length){box.innerHTML='<div style="padding:50px;text-align:center;color:var(--muted)">No sessions this month.</div>';return}
+  const g={};m.forEach(s=>{(g[s.date]=g[s.date]||[]).push(s)});
+  let h="";Object.keys(g).sort().forEach(date=>{
+    const d=new Date(date+"T00:00:00");
+    h+=`<div class="day"><div class="dh">${DOW[(d.getDay()+6)%7]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}</div>`;
+    g[date].forEach(s=>{h+=`<div class="row" style="cursor:pointer" onclick='openDetailId(${s.id})'>
+      <div class="t">${fmtTime(s.start)}</div><div class="m">${esc(s.title)}</div>
+      <div><span class="sw" style="background:${podColor(s.pod_short)}"></span>${esc(s.pod_short)}</div>
+      <div>${esc(s.faculty)}</div><div><span class="badge ${s.status}">${s.status}</span></div></div>`});
+    h+="</div>";
+  });
+  box.innerHTML=h;
+}
+function openDetailId(id){openDetail(SESSIONS.find(s=>s.id===id))}
+function openDetail(s){
+  if(!s)return;const col=podColor(s.pod_short);
+  const inv=(PODS[s.pod_short]||{}).invitees||[];
+  document.getElementById("dTitle").textContent=s.title;
+  document.getElementById("dBody").innerHTML=
+    `<div style="border-left:5px solid ${col};padding-left:12px"><div class="v" style="font-size:16px">${esc(podFull(s.pod_short))}</div>
+       <span class="badge ${s.status}">${s.status}</span> ${s.type!=="module"?"· "+s.type:""}</div>
+     <div class="grid2">
+       <div class="kv"><div class="k">Faculty</div><div class="v">${esc(s.faculty)} (${s.fkind})</div></div>
+       <div class="kv"><div class="k">Date</div><div class="v">${s.date}</div></div>
+       <div class="kv"><div class="k">Time</div><div class="v">${fmtTime(s.start)}${s.end?" – "+fmtTime(s.end):""}</div></div>
+       <div class="kv"><div class="k">Mode</div><div class="v">${s.mode==="virtual"?"Virtual":"In person"}</div></div>
+     </div>
+     <div class="kv"><div class="k">${s.mode==="virtual"?"Meeting link":"Venue"}</div><div class="v">${s.loc?esc(s.loc):"—"}</div></div>
+     ${s.note?`<div style="background:var(--warm);border-radius:6px;padding:10px 12px;font-size:13.5px">${esc(s.note)}</div>`:""}
+     <div style="background:var(--tint);border-radius:6px;padding:10px 12px;font-size:13px"><b>${inv.length} invitee(s)</b> on sync${inv.length?": "+inv.slice(0,6).map(esc).join(", ")+(inv.length>6?", +"+(inv.length-6)+" more":""):""}</div>`;
+  document.getElementById("ov").classList.add("open");
+}
+function closeOv(){document.getElementById("ov").classList.remove("open")}
+document.getElementById("ov").addEventListener("click",e=>{if(e.target.id==="ov")closeOv()});
+function sync(){vMonth.setAttribute("aria-pressed",view==="month");vList.setAttribute("aria-pressed",view==="list")}
+prev.onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);render()};
+next.onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);render()};
+today.onclick=()=>{const t=new Date();cur=new Date(t.getFullYear(),t.getMonth(),1);render()};
+vMonth.onclick=()=>{view="month";sync();render()};
+vList.onclick=()=>{view="list";sync();render()};
+load();
+</script>
+</body>
+</html>
